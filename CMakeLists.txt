@@ -27,6 +27,7 @@ MACRO(add_example name)
       include/VanishingPoint/vanishpoint.h
       include/utils/transformation.h
       include/ParticleFilter/particle.h
+      include/control/ctello.h
       # .cpp files
 
       include/VanishingPoint/vanishpoint.cpp
@@ -34,6 +35,7 @@ MACRO(add_example name)
       include/utils/functions.cpp
       include/ParticleFilter/particle.cpp
       include/utils/calibration.h
+      include/control/ctello.cpp
       )
 
   TARGET_LINK_LIBRARIES(${name} ${OpenCV_LIBS})
