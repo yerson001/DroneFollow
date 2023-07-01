@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 2.8)
+cmake_minimum_required(VERSION 3.8)
 
 project(DroneFollow)
 
@@ -41,8 +41,8 @@ MACRO(add_example name)
   TARGET_LINK_LIBRARIES(${name} ${OpenCV_LIBS})
 ENDMACRO()
 
-#add_example(main)
+add_example(main)
 #add_example(vp)
-add_example(pf)
+#add_example(pf)
 #add_example(ld)
 

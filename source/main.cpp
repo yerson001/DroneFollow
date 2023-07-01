@@ -1,44 +1,75 @@
-#include <opencv2/core/core.hpp>
-#include <opencv2/highgui/highgui.hpp>
 #include <iostream>
-#include <string>
-#include "LaneDetection/laneDetection.h"
-#include "utils/calibration.h"
+#include <random>
+#include <opencv2/opencv.hpp>
+#include <stdlib.h>
+#include <time.h>
+#include <vector>
+#include "ParticleFilter/particle.h"
 #include "utils/functions.h"
-//#include "vanishpoint.h"
-#include "utils/transformation.h"
+#include "VanishingPoint/vanishpoint.h"
+#include <opencv2/imgproc/types_c.h>
+using namespace std;
+using namespace cv;
 
+funciones f;
+vanishpoint vp;
 
-char key = 0;
-int main(int argc, char **argv)
+Mat Frame;
+Mat capFrame;
+Mat refMask;
+Size objectSize(40,40);
+Point MroiPoint;
+
+int main()
 {
-    cout<<argv[1]<<endl;
+    int mParticles = 4000;
+    Mat Mesampling;
+
+    VideoCapture cap("/home/yerson/Videos/video_1.mp4");
+    //VideoCapture cap("/home/fondecyt/Vídeos/video_.mp4");
+    cap >> Frame;
+
+    vp.vp(Frame,refMask);
+    cv::cvtColor(refMask, refMask, cv::COLOR_GRAY2BGR);
+    f.getCenter(refMask,MroiPoint);
+
+    capFrame = refMask.clone();
+    Particle MyparticleAlgo(refMask, capFrame, mParticles, objectSize, MroiPoint);
 
 
-    cv::VideoCapture cap("/home/fondecyt/Vídeos/video_.mp4");
+    while(!capFrame.empty())
+    {
+        Mesampling = capFrame.clone();
+        //To initialize the particles
+        if(cap.get(CAP_PROP_POS_FRAMES)==1)
+        {
+            MyparticleAlgo.setInputImage(capFrame);
+            MyparticleAlgo.generateParticlesInit();
+            Mesampling = MyparticleAlgo.getParticleImage().clone();
+            namedWindow("MParticles",WINDOW_NORMAL);
+            imshow("MParticles", Mesampling);
+            capFrame = MyparticleAlgo.getTarget().clone();
+        }
+        //Frame by frame tracking
+        if(cap.get(CAP_PROP_POS_FRAMES)>1)
+        {
+            MyparticleAlgo.setInputImage(capFrame);
+            MyparticleAlgo.particleAlgo();
+            capFrame = MyparticleAlgo.getTarget().clone();
+            Mesampling = MyparticleAlgo.getParticleImage().clone();
+            imshow("MParticles", Mesampling);
+        }
+        imshow("track frame",capFrame);
+        if(waitKey(10) == 27) break;
 
-    // Verifica si se puede abrir el video de entrada
-    if (!cap.isOpened()) {
-        std::cerr << "Error al abrir el video de entrada." << std::endl;
-        return -1;
+        cap >> capFrame;
+        imshow("frame",f.ResizeImage(capFrame,0.5));
+        vp.vp(capFrame,refMask);
+        cv::cvtColor(refMask, capFrame, cv::COLOR_GRAY2BGR);
     }
 
-    // Procesa el video cuadro por cuadro
-    cv::Mat frame;
-    while (cap.read(frame)) {
-        // Procesa el cuadro aquí
-        // ...
 
-        // Muestra el cuadro procesado en una ventana
-        cv::imshow("Video", frame);
-
-        // Espera 25 milisegundos para que se muestre el cuadro en la ventana
-        cv::waitKey(25);
-    }
-
-    // Libera los recursos
-    cap.release();
-    cv::destroyAllWindows();
+    waitKey(0);
     return 0;
 
 }
